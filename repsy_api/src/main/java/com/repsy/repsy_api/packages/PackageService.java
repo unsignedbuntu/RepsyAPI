@@ -1,6 +1,8 @@
 package com.repsy.repsy_api.packages;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.repsy.repsy_api.storage.StorageException;
+import com.repsy.repsy_api.storage.StorageFileNotFoundException;
 import com.repsy.repsy_api.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,8 @@ public class PackageService {
      * @throws StorageException if there's an error storing the files.
      */
     @Transactional // Ensure atomicity: either all succeed (DB + file storage) or all fail
-    public void deployPackage(String packageName, String version, MultipartFile repFile, MultipartFile metaFile) {
+    public void deployPackage(String packageName, String version, MultipartFile repFile, MultipartFile metaFile)
+            throws PackageAlreadyExistsException, InvalidMetadataException, StorageException {
         logger.info("Attempting to deploy package: {} version: {}", packageName, version);
 
         // 1. Check if package version already exists
@@ -56,11 +59,12 @@ public class PackageService {
 
         // 2. Parse and validate meta.json
         PackageMetadata metadata;
+        String rawJsonDependencies;
         try (InputStream metaInputStream = metaFile.getInputStream()) {
-            // Attempt to parse JSON into our PackageMetadata entity
-            // Note: ObjectMapper will only map fields present in both JSON and the class.
-            // We might need a dedicated DTO for meta.json parsing for better validation.
-            metadata = objectMapper.readValue(metaInputStream, PackageMetadata.class);
+            // Read all bytes first to allow parsing and storing raw JSON
+            byte[] metaBytes = metaInputStream.readAllBytes();
+            rawJsonDependencies = new String(metaBytes);
+            metadata = objectMapper.readValue(metaBytes, PackageMetadata.class);
 
             // Basic validation: Check if name and version from URL match meta.json content
             if (!packageName.equals(metadata.getName()) || !version.equals(metadata.getVersion())) {
@@ -68,21 +72,18 @@ public class PackageService {
                         packageName, version, metadata.getName(), metadata.getVersion());
                 throw new InvalidMetadataException("Package name or version in meta.json does not match the deployment URL.");
             }
-             // Store the raw JSON string as well
-             metaFile.getInputStream().reset(); // Reset stream if needed, or read again
-             metadata.setDependenciesJson(new String(metaFile.getInputStream().readAllBytes()));
+            // Store the raw JSON string
+            metadata.setDependenciesJson(rawJsonDependencies);
 
         } catch (IOException e) {
-             logger.error("Failed to read or parse meta.json for {}/{}", packageName, version, e);
-            throw new InvalidMetadataException("Failed to read or parse meta.json.", e);
+            logger.error("Failed to read meta.json for {}/{}", packageName, version, e);
+            throw new InvalidMetadataException("Failed to read meta.json.", e);
         } catch (Exception e) { // Catch potential JSON parsing errors
             logger.error("Invalid JSON format in meta.json for {}/{}", packageName, version, e);
             throw new InvalidMetadataException("Invalid JSON format in meta.json.", e);
         }
 
         // 3. Store the files using StorageService
-        // Construct paths like: {packageName}/{version}/{packageName}-{version}.rep
-        // and {packageName}/{version}/meta.json
         Path packageRootPath = Paths.get(packageName, version);
         Path repFilePath = packageRootPath.resolve(packageName + "-" + version + ".rep");
         Path metaFilePath = packageRootPath.resolve("meta.json");
@@ -91,25 +92,22 @@ public class PackageService {
             logger.debug("Storing .rep file to: {}", repFilePath);
             storageService.store(repFile, repFilePath);
             logger.debug("Storing meta.json file to: {}", metaFilePath);
-            storageService.store(metaFile, metaFilePath); // Store meta.json again for direct download later
-        } catch (Exception e) { // Catch StorageException and others
-            // Important: If file storage fails after DB save starts (though @Transactional helps),
-            // we might need cleanup logic, but @Transactional should roll back the DB save.
+            // Re-use the already read metaBytes to avoid reading the file again
+            storageService.store(new ByteArrayMultipartFile(metaFile.getName(), metaFile.getOriginalFilename(), metaFile.getContentType(), rawJsonDependencies.getBytes()), metaFilePath);
+        } catch (StorageException e) { // Catch specific storage exception
             logger.error("Storage failed during deployment of {}/{}. DB changes will be rolled back.", packageName, version, e);
-            throw new StorageException("Failed to store package files.", e);
+            throw e; // Re-throw the original StorageException
+        } catch (Exception e) {
+            logger.error("Unexpected storage error during deployment of {}/{}. DB changes will be rolled back.", packageName, version, e);
+            throw new StorageException("Failed to store package files due to an unexpected error.", e);
         }
 
         // 4. Save metadata to the database
-        // createdAt is set automatically in the entity
         try {
             logger.debug("Saving metadata to database for {}/{}", packageName, version);
             packageRepository.save(metadata);
         } catch (Exception e) {
-            // Catch DataIntegrityViolationException etc.
-            // This might happen if another request deployed the same package concurrently
-            // after our initial check, despite the unique constraint.
             logger.error("Database save failed during deployment of {}/{}. Files might have been stored but DB transaction will be rolled back.", packageName, version, e);
-            // Re-throw a more specific exception potentially
             throw new RuntimeException("Failed to save package metadata to database.", e);
         }
 
@@ -133,24 +131,14 @@ public class PackageService {
         }
     }
 
-    public static class StorageException extends RuntimeException {
-            public StorageException(String message) {
-                super(message);
-            }
-
-            public StorageException(String message, Throwable cause) {
-                super(message, cause);
-            }
-     }
-
-     public static class PackageNotFoundException extends RuntimeException {
-         public PackageNotFoundException(String message) {
-             super(message);
-         }
-     }
-
-    // --- Add methods for download etc. later ---
-    // public Resource downloadPackageFile(String packageName, String version, String filename) { ... }
+    public static class PackageNotFoundException extends RuntimeException {
+        public PackageNotFoundException(String message) {
+            super(message);
+        }
+         public PackageNotFoundException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 
     /**
      * Loads a specific file (e.g., .rep or meta.json) for a given package and version.
@@ -160,34 +148,59 @@ public class PackageService {
      * @param filename    The name of the file to load (e.g., "mypackage-1.0.0.rep" or "meta.json").
      * @return A Spring Resource representing the file.
      * @throws PackageNotFoundException if the package or the specific file does not exist.
+     * @throws StorageException         if there is an issue accessing the storage.
      */
-    public Resource loadPackageResource(String packageName, String version, String filename) {
+    public Resource loadPackageResource(String packageName, String version, String filename)
+            throws PackageNotFoundException, StorageException {
         logger.debug("Attempting to load resource {} for package {}/{}", filename, packageName, version);
 
-        // Construct the expected path within the storage
         Path filePath = Paths.get(packageName, version, filename);
-        String filePathString = filePath.toString().replace("\\", "/"); // Use consistent separators
+        String filePathString = filePath.toString().replace("\\", "/");
 
         try {
             Resource resource = storageService.loadAsResource(filePathString);
             if (resource.exists() && resource.isReadable()) {
-                // Optional: Could also check if the package metadata exists in DB here for extra validation
-                // packageRepository.findByNameAndVersion(packageName, version)
-                //       .orElseThrow(() -> new PackageNotFoundException(...));
                 logger.info("Resource {} found for package {}/{}", filename, packageName, version);
                 return resource;
             } else {
                 logger.warn("Resource {} not found or not readable for package {}/{} at path {}", filename, packageName, version, filePathString);
+                // Throw PackageNotFoundException which semantically fits better here than StorageFileNotFoundException
                 throw new PackageNotFoundException("Could not find or read file: " + filename + " for package " + packageName + " version " + version);
             }
         } catch (StorageFileNotFoundException e) { // Catch specific exception from StorageService
             logger.warn("StorageFileNotFoundException for resource {} in package {}/{}: {}", filename, packageName, version, e.getMessage());
             throw new PackageNotFoundException("Could not find file: " + filename + " for package " + packageName + " version " + version, e);
-        } catch (Exception e) { // Catch other potential errors from storage service
-             logger.error("Error loading resource {} for package {}/{}: {}", filename, packageName, version, e.getMessage(), e);
-            // Re-throw as our specific exception or a generic one
+        } catch (StorageException e) { // Catch other storage exceptions
+            logger.error("Storage error loading resource {} for package {}/{}: {}", filename, packageName, version, e.getMessage(), e);
+            throw e; // Re-throw the original StorageException
+        } catch (Exception e) { // Catch unexpected errors
+            logger.error("Unexpected error loading resource {} for package {}/{}: {}", filename, packageName, version, e.getMessage(), e);
             throw new StorageException("Could not load file: " + filename, e);
         }
     }
 
+    // Helper class to re-store meta.json without re-reading the original MultipartFile stream
+    private static class ByteArrayMultipartFile implements MultipartFile {
+        private final String name;
+        private final String originalFilename;
+        private final String contentType;
+        private final byte[] content;
+
+        public ByteArrayMultipartFile(String name, String originalFilename, String contentType, byte[] content) {
+            this.name = name;
+            this.originalFilename = originalFilename;
+            this.contentType = contentType;
+            this.content = content;
+        }
+
+        @Override public String getName() { return name; }
+        @Override public String getOriginalFilename() { return originalFilename; }
+        @Override public String getContentType() { return contentType; }
+        @Override public boolean isEmpty() { return content.length == 0; }
+        @Override public long getSize() { return content.length; }
+        @Override public byte[] getBytes() throws IOException { return content; }
+        @Override public InputStream getInputStream() throws IOException { return new java.io.ByteArrayInputStream(content); }
+        @Override public void transferTo(Path dest) throws IOException, IllegalStateException { Files.write(dest, content); }
+        @Override public void transferTo(java.io.File dest) throws IOException, IllegalStateException { Files.write(dest.toPath(), content); }
+    }
 } 

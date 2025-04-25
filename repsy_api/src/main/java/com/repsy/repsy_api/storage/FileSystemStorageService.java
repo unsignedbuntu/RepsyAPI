@@ -122,25 +122,6 @@ public class FileSystemStorageService implements StorageService {
     }
 
 
-    // Helper exception classes (can be moved to separate files later if preferred)
+    // Helper exception classes removed, moved to separate files.
 
-    public static class StorageException extends RuntimeException {
-        public StorageException(String message) {
-            super(message);
-        }
-
-        public StorageException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-
-    public static class StorageFileNotFoundException extends StorageException {
-        public StorageFileNotFoundException(String message) {
-            super(message);
-        }
-
-        public StorageFileNotFoundException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
 } 
