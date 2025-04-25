@@ -5,6 +5,7 @@ import com.repsy.repsy_api.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -150,5 +151,43 @@ public class PackageService {
 
     // --- Add methods for download etc. later ---
     // public Resource downloadPackageFile(String packageName, String version, String filename) { ... }
+
+    /**
+     * Loads a specific file (e.g., .rep or meta.json) for a given package and version.
+     *
+     * @param packageName The name of the package.
+     * @param version     The version of the package.
+     * @param filename    The name of the file to load (e.g., "mypackage-1.0.0.rep" or "meta.json").
+     * @return A Spring Resource representing the file.
+     * @throws PackageNotFoundException if the package or the specific file does not exist.
+     */
+    public Resource loadPackageResource(String packageName, String version, String filename) {
+        logger.debug("Attempting to load resource {} for package {}/{}", filename, packageName, version);
+
+        // Construct the expected path within the storage
+        Path filePath = Paths.get(packageName, version, filename);
+        String filePathString = filePath.toString().replace("\\", "/"); // Use consistent separators
+
+        try {
+            Resource resource = storageService.loadAsResource(filePathString);
+            if (resource.exists() && resource.isReadable()) {
+                // Optional: Could also check if the package metadata exists in DB here for extra validation
+                // packageRepository.findByNameAndVersion(packageName, version)
+                //       .orElseThrow(() -> new PackageNotFoundException(...));
+                logger.info("Resource {} found for package {}/{}", filename, packageName, version);
+                return resource;
+            } else {
+                logger.warn("Resource {} not found or not readable for package {}/{} at path {}", filename, packageName, version, filePathString);
+                throw new PackageNotFoundException("Could not find or read file: " + filename + " for package " + packageName + " version " + version);
+            }
+        } catch (StorageFileNotFoundException e) { // Catch specific exception from StorageService
+            logger.warn("StorageFileNotFoundException for resource {} in package {}/{}: {}", filename, packageName, version, e.getMessage());
+            throw new PackageNotFoundException("Could not find file: " + filename + " for package " + packageName + " version " + version, e);
+        } catch (Exception e) { // Catch other potential errors from storage service
+             logger.error("Error loading resource {} for package {}/{}: {}", filename, packageName, version, e.getMessage(), e);
+            // Re-throw as our specific exception or a generic one
+            throw new StorageException("Could not load file: " + filename, e);
+        }
+    }
 
 } 
