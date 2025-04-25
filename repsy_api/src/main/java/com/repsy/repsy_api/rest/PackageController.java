@@ -1,6 +1,7 @@
 package com.repsy.repsy_api.rest;
 
 import com.repsy.repsy_api.packages.PackageService;
+import com.repsy.repsy_api.storage.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,7 @@ public class PackageController {
         } catch (PackageService.InvalidMetadataException e) {
             logger.warn("Bad request during deployment of {}/{}: {}", packageName, version, e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        } catch (PackageService.StorageException e) {
+        } catch (StorageException e) {
             logger.error("Storage error during deployment of {}/{}: {}", packageName, version, e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store package files.", e);
         } catch (Exception e) {
@@ -114,7 +115,7 @@ public class PackageController {
         } catch (PackageService.PackageNotFoundException e) {
              logger.warn("Not found error during download of file {} for package {}/{}: {}", fileName, packageName, version, e.getMessage());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
-        } catch (PackageService.StorageException e) {
+        } catch (StorageException e) {
              logger.error("Storage error during download of file {} for package {}/{}: {}", fileName, packageName, version, e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving file from storage.", e);
         } catch (Exception e) {
