@@ -45,9 +45,13 @@ public class PackageController {
         logger.info("Received deployment request for package: {} version: {}", packageName, version);
 
         // Basic validation for uploaded files
-        if (repFile.isEmpty() || metaFile.isEmpty()) {
-            logger.warn("Deployment request for {}/{} rejected: Missing repFile or metaFile.", packageName, version);
-            return ResponseEntity.badRequest().body("Both repFile and metaFile are required.");
+        if (metaFile == null || metaFile.isEmpty()) {
+            logger.warn("Deployment request for {}/{} rejected: Missing or empty metaFile.", packageName, version);
+            return ResponseEntity.badRequest().body("metaFile is required and cannot be empty.");
+        }
+        if (repFile == null) {
+            logger.warn("Deployment request for {}/{} rejected: Missing repFile.", packageName, version);
+            return ResponseEntity.badRequest().body("repFile is required.");
         }
 
         // Consider adding more specific file type/size checks if necessary

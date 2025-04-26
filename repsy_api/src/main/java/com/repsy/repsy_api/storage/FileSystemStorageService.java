@@ -1,5 +1,7 @@
 package com.repsy.repsy_api.storage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -22,6 +24,7 @@ import java.util.stream.Stream;
 // @ConditionalOnProperty(name = "storage.strategy", havingValue = "filesystem", matchIfMissing = true) // Managed in StorageConfiguration
 public class FileSystemStorageService implements StorageService {
 
+    private static final Logger logger = LoggerFactory.getLogger(FileSystemStorageService.class);
     private final Path rootLocation;
 
     @Autowired
@@ -43,26 +46,43 @@ public class FileSystemStorageService implements StorageService {
     @Override
     public void store(MultipartFile file, Path destinationPath) {
         try {
-            if (file.isEmpty()) {
-                throw new StorageException("Failed to store empty file.");
-            }
             // Construct the absolute destination path
             Path absoluteDestinationFile = this.rootLocation.resolve(destinationPath).normalize().toAbsolutePath();
+            Path parentDir = absoluteDestinationFile.getParent();
+
+            // --- DEBUG LOGGING START ---
+            logger.info("Attempting to store file.");
+            logger.info("Root location: {}", this.rootLocation.toAbsolutePath());
+            logger.info("Provided destination path: {}", destinationPath);
+            logger.info("Calculated absolute destination file: {}", absoluteDestinationFile);
+            logger.info("Calculated parent directory: {}", parentDir);
+            // --- DEBUG LOGGING END ---
 
             // Security check: ensure the destination is within the root location
-            if (!absoluteDestinationFile.getParent().startsWith(this.rootLocation.toAbsolutePath())) {
+            if (!parentDir.startsWith(this.rootLocation.toAbsolutePath())) {
+                // Log the check failure for debugging
+                logger.error("Security check failed: Parent directory {} is not within root location {}", parentDir, this.rootLocation.toAbsolutePath());
                 throw new StorageException("Cannot store file outside current directory.");
             }
 
             // Create parent directories if they don't exist
-            Files.createDirectories(absoluteDestinationFile.getParent());
+            logger.info("Creating parent directories if needed: {}", parentDir);
+            Files.createDirectories(parentDir);
+            logger.info("Parent directories should exist now.");
 
             // Copy the file's input stream to the destination path, replacing existing files
             try (InputStream inputStream = file.getInputStream()) {
+                logger.info("Copying input stream to: {}", absoluteDestinationFile);
                 Files.copy(inputStream, absoluteDestinationFile, StandardCopyOption.REPLACE_EXISTING);
+                logger.info("File copied successfully to: {}", absoluteDestinationFile);
             }
         } catch (IOException e) {
+            // Log the exception before throwing
+            logger.error("IOException during file storage to {}: {}", destinationPath, e.getMessage(), e);
             throw new StorageException("Failed to store file.", e);
+        } catch (Exception e) { // Catch any other unexpected exception
+             logger.error("Unexpected exception during file storage to {}: {}", destinationPath, e.getMessage(), e);
+            throw new StorageException("Unexpected error storing file.", e);
         }
     }
 
