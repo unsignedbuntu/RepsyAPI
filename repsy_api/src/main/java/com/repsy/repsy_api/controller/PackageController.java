@@ -16,11 +16,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Map;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RestController
+@RequestMapping("/packages")
 public class PackageController {
 
     private final PackageService packageService;
@@ -75,6 +77,36 @@ public class PackageController {
             logger.error("Internal server error during download of file {} for package {}/{}", fileName, packageName, version, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @ExceptionHandler(PackageService.PackageAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handlePackageAlreadyExists(PackageService.PackageAlreadyExistsException ex) {
+        logger.warn("Conflict: {}", ex.getMessage());
+        Map<String, String> responseBody = Map.of(
+                "error", "Conflict",
+                "message", ex.getMessage()
+        );
+        return new ResponseEntity<>(responseBody, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(PackageService.InvalidFileException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidFile(PackageService.InvalidFileException ex) {
+        logger.warn("Bad Request: {}", ex.getMessage());
+        Map<String, String> responseBody = Map.of(
+                "error", "Bad Request",
+                "message", ex.getMessage()
+        );
+        return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PackageService.InvalidMetadataException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidMetadata(PackageService.InvalidMetadataException ex) {
+        logger.warn("Bad Request (Metadata): {}", ex.getMessage());
+        Map<String, String> responseBody = Map.of(
+                "error", "Bad Request",
+                "message", "Invalid package metadata: " + ex.getMessage()
+        );
+        return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
     }
 
 } 

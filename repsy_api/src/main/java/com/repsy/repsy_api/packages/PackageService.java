@@ -44,12 +44,24 @@ public class PackageService {
      * @param metaFile       The meta.json metadata file.
      * @throws PackageAlreadyExistsException if the package name and version combination already exists.
      * @throws InvalidMetadataException if meta.json is invalid or doesn't match expected fields.
+     * @throws InvalidFileException if repFile or metaFile is empty.
      * @throws StorageException if there's an error storing the files.
      */
     @Transactional // Ensure atomicity: either all succeed (DB + file storage) or all fail
     public void deployPackage(String packageName, String version, MultipartFile repFile, MultipartFile metaFile)
-            throws PackageAlreadyExistsException, InvalidMetadataException, StorageException {
+            throws PackageAlreadyExistsException, InvalidMetadataException, InvalidFileException, StorageException {
         logger.info("Attempting to deploy package: {} version: {}", packageName, version);
+
+        // --- Start: Added empty file checks ---
+        if (repFile == null || repFile.isEmpty()) {
+            logger.warn("Deployment failed: repFile is empty for {}/{}", packageName, version);
+            throw new InvalidFileException("'repFile' cannot be empty.");
+        }
+        if (metaFile == null || metaFile.isEmpty()) {
+            logger.warn("Deployment failed: metaFile is empty for {}/{}", packageName, version);
+            throw new InvalidFileException("'metaFile' cannot be empty.");
+        }
+        // --- End: Added empty file checks ---
 
         // 1. Check if package version already exists
         Optional<PackageMetadata> existingPackage = packageRepository.findByNameAndVersion(packageName, version);
@@ -137,6 +149,15 @@ public class PackageService {
             super(message);
         }
          public PackageNotFoundException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    public static class InvalidFileException extends RuntimeException {
+        public InvalidFileException(String message) {
+            super(message);
+        }
+        public InvalidFileException(String message, Throwable cause) {
             super(message, cause);
         }
     }
