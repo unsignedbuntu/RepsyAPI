@@ -87,6 +87,56 @@ After a successful build, run the main application from the project's root direc
 *   The application will start, using the configuration from `repsy_api/src/main/resources/application.properties`.
 *   By default, it will listen on port `8080`.
 
+## Running with Docker (Recommended)
+
+This project includes a `Dockerfile` for the main application (`repsy_api/Dockerfile`) and a `docker-compose.yml` file in the root directory to easily run the application along with its dependencies (PostgreSQL and Minio).
+
+### Prerequisites
+
+*   Docker and Docker Compose installed.
+
+### How to Run with Docker Compose
+
+1.  **Navigate to the project root directory (`RepsyAPI`) in your terminal.**
+2.  **Build and start the services:**
+    ```bash
+    docker compose up --build
+    ```
+    *   The `--build` flag is needed the first time or if you make changes to the `repsy_api` code or `Dockerfile`.
+    *   This command will:
+        *   Build the Docker image for the `repsy-api` service using `repsy_api/Dockerfile`.
+        *   Download the official images for PostgreSQL (`db` service) and Minio (`minio` service).
+        *   Start all three containers.
+        *   Show the combined logs in your terminal.
+    *   To run in detached mode (in the background), use `docker compose up -d --build`.
+
+3.  **(If using Minio) Create Minio Bucket:**
+    *   If you intend to use the `minio` storage strategy, you need to create the bucket specified in `docker-compose.yml` (default: `repsy-packages`).
+    *   Open your browser and go to the Minio console: `http://localhost:9001`.
+    *   Log in with the credentials defined in `docker-compose.yml` (default: `minioadmin`/`minioadmin`).
+    *   Create the bucket named `repsy-packages`.
+
+4.  **Access the API:** The Repsy API will be available at `http://localhost:8080`.
+
+### Configuration with Docker Compose
+
+*   The `docker-compose.yml` file uses environment variables to configure the `repsy-api` service, overriding settings in `application.properties`.
+*   Database and Minio hostnames are set to the service names (`db` and `minio`).
+*   **Default Storage:** The default storage strategy when running with Docker Compose is `filesystem`. Files will be stored *inside* the `repsy-api` container at `/app/upload-dir-in-container`.
+*   **Using Minio Strategy:** To run with the Minio strategy, set the `STORAGE_STRATEGY` environment variable when starting:
+    ```bash
+    STORAGE_STRATEGY=minio docker compose up --build
+    ```
+
+### Stopping the Services
+
+*   If running in the foreground, press `Ctrl+C` in the terminal where `docker compose up` is running.
+*   If running in detached mode, navigate to the project root and run:
+    ```bash
+    docker compose down
+    ```
+    This will stop and remove the containers. Add the `-v` flag (`docker compose down -v`) to also remove the data volumes (`postgres_data`, `minio_data`).
+
 ## API Endpoints
 
 ### 1. Deploy Package
