@@ -57,6 +57,8 @@ storage.strategy=filesystem
     *   Ensure you have a Minio server running.
     *   Update the endpoint, keys, and bucket name. The specified bucket must exist or be creatable by the provided credentials.
 
+**Note:** Both `filesystem` and `minio` storage strategies have been tested and confirmed to be working correctly for package deployment and download operations.
+
 ## How to Build
 
 Navigate to the project's root directory (`RepsyAPI`) in your terminal and run:

@@ -14,12 +14,13 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
@@ -110,32 +111,23 @@ public class MinioStorageService implements StorageService {
     @Override
     public Resource loadAsResource(String filename) {
         String objectName = filename.replace("\\", "/");
-        try {
-            InputStream stream = minioClient.getObject(
-                    GetObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .build());
-            return new InputStreamResource(stream) {
+        try (InputStream stream = minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build())) {
+
+            // Read the stream into a byte array
+            // Using try-with-resources ensures the stream is closed
+            byte[] content = stream.readAllBytes();
+
+            // Return as ByteArrayResource
+            return new ByteArrayResource(content) {
                 @Override
                 public String getFilename() {
+                    // Return the original filename for content disposition header etc.
                     return filename;
                 }
-                 @Override
-                 public boolean exists() {
-                    try {
-                         minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(objectName).build());
-                         return true;
-                     } catch (ErrorResponseException e) {
-                        if (e.errorResponse().code().equals("NoSuchKey")) {
-                             return false;
-                        } else {
-                             throw new StorageException("Failed to check existence for file " + filename, e);
-                        }
-                    } catch (Exception e) {
-                         throw new StorageException("Failed to check existence for file " + filename, e);
-                    }
-                 }
             };
         } catch (ErrorResponseException e) {
              if (e.errorResponse().code().equals("NoSuchKey")) {

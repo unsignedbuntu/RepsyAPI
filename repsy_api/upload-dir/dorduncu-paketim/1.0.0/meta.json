@@ -1,0 +1,12 @@
+{
+    "name": "dorduncu-paketim", 
+    "version": "1.0.0", 
+    "author": "John Doewfafwafawfwafwa",
+     "dependencies": [
+       { "package": "evefwafn", "version": "32.4.7" },
+       { "package": "oddfwfw", "version": "43.2.8" },
+       { "package": "matfwafh", "version": "13.2.0" }, 
+       { "package": "repafwfsy", "version": "15.0.3" }, 
+       { "package": "cliefawfnt", "version": "36.3.0" } 
+    ] 
+    }

@@ -21,7 +21,7 @@ public class PackageMetadata {
     private Long id;
 
     @NotBlank(message = "Package name cannot be blank")
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
     @NotBlank(message = "Version cannot be blank")
@@ -97,7 +97,7 @@ public class PackageMetadata {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PackageMetadata that = (PackageMetadata) o;
-        // Use name and version for equality, as they should be unique together
+        // Use name and version for equality
         return Objects.equals(name, that.name) && Objects.equals(version, that.version);
     }
 

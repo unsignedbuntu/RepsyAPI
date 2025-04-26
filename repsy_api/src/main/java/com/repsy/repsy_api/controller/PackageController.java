@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,31 +46,42 @@ public class PackageController {
     }
 
     @GetMapping("/{packageName}/{version}/{fileName:.+}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String packageName,
+    public ResponseEntity<byte[]> downloadFile(@PathVariable String packageName,
                                                  @PathVariable String version,
                                                  @PathVariable String fileName) {
         try {
             Path filePath = Paths.get(packageName, version, fileName);
             Resource resource = storageService.loadAsResource(filePath.toString());
 
-            String contentType = "application/octet-stream";
-            try {
-                Path resourcePath = resource.getFile().toPath();
-                contentType = Files.probeContentType(resourcePath);
-                if (contentType == null) {
-                    if (fileName.endsWith(".json")) contentType = "application/json";
-                    else if (fileName.endsWith(".rep")) contentType = "application/octet-stream";
-                    else contentType = "application/octet-stream";
-                }
-            } catch (IOException e) {
-                logger.warn("Could not determine content type for {}, falling back to octet-stream", resource.getFilename(), e);
+            // Determine content type based on filename extension
+            String contentType;
+            if (fileName.endsWith(".json")) {
+                contentType = MediaType.APPLICATION_JSON_VALUE;
+            } else if (fileName.endsWith(".rep")) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            } else {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                logger.warn("Could not determine specific content type for {}, falling back to {}", fileName, contentType);
             }
+
             logger.info("Serving file {} with content type {}", resource.getFilename(), contentType);
 
+            // Read resource content into byte array
+            byte[] content;
+            try (InputStream inputStream = resource.getInputStream()) {
+                content = inputStream.readAllBytes();
+            } catch (IOException e) {
+                logger.error("Failed to read resource content for {}", resource.getFilename(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+
+            // Return byte array directly in the response body
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                     .contentType(MediaType.parseMediaType(contentType))
-                    .body(resource);
+                    .contentLength(content.length)
+                    .body(content);
+
         } catch (StorageFileNotFoundException e) {
             logger.warn("Not found error during download of file {} for package {}/{}: {}", fileName, packageName, version, e.getMessage());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find file: " + fileName + " for package " + packageName + " version " + version, e);

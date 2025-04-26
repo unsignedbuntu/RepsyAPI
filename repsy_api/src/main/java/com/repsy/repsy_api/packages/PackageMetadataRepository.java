@@ -11,7 +11,7 @@ public interface PackageMetadataRepository extends JpaRepository<PackageMetadata
     /**
      * Finds a package by its unique name and version combination.
      *
-     * @param name    The name of the package.
+     * @param name The name of the package.
      * @param version The version of the package.
      * @return An Optional containing the found PackageMetadata, or empty if not found.
      */
