@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+// import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; // Keep commented out for now
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
@@ -25,18 +25,20 @@ public class RepsyApiApplication {
 
 	// Moved StorageService Bean definitions here
 	@Bean
-    @ConditionalOnProperty(name = "storage.strategy", havingValue = "filesystem", matchIfMissing = true)
+    // @ConditionalOnProperty(name = "storage.strategy", havingValue = "filesystem", matchIfMissing = true) // Keep commented out
     StorageService fileSystemStorageService(StorageProperties properties) {
-        logger.info(">>> Creating FileSystemStorageService bean based on strategy: {}", properties.getStrategy());
+        logger.info(">>> Creating FileSystemStorageService bean unconditionally.");
         return new FileSystemStorageService(properties);
     }
 
+    /* // Minio bean remains commented out
     @Bean
     @ConditionalOnProperty(name = "storage.strategy", havingValue = "minio")
     StorageService minioStorageService(StorageProperties properties) {
          logger.info(">>> Creating MinioStorageService bean based on strategy: {}", properties.getStrategy());
         return new MinioStorageService(properties);
     }
+    */
 
 	// We can add a CommandLineRunner bean later to initialize the storage on startup
 	/* @Bean
