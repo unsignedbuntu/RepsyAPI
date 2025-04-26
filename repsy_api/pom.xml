@@ -19,20 +19,23 @@
 	</properties>
 
 	<dependencies>
-		<!-- Dependency on our storage API -->
+		<!-- Dependency on our storage API (Now coming from repository) -->
 		<dependency>
 			<groupId>com.repsy</groupId>
 			<artifactId>storage-api</artifactId>
+			<!-- Version is managed by parent POM -->
 		</dependency>
-		<!-- Dependency on filesystem implementation (needed for auto-configuration) -->
+		<!-- Dependency on filesystem implementation (Now coming from repository) -->
 		<dependency>
 			<groupId>com.repsy</groupId>
 			<artifactId>storage-filesystem</artifactId>
+			<!-- Version is managed by parent POM -->
 		</dependency>
-		<!-- Dependency on minio implementation (needed for auto-configuration) -->
+		<!-- Dependency on minio implementation (Now coming from repository) -->
 		<dependency>
 			<groupId>com.repsy</groupId>
 			<artifactId>storage-minio</artifactId>
+			<!-- Version is managed by parent POM -->
 		</dependency>
 
 		<!-- Spring Boot Starters -->
