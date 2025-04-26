@@ -1,6 +1,5 @@
 package com.repsy.repsy_api;
 
-import com.repsy.repsy_api.config.StorageAutoConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -8,10 +7,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 // import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; // Keep commented out for now
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
-@Import(StorageAutoConfiguration.class)
 // @EnableConfigurationProperties(StorageProperties.class) // This is now handled by StorageAutoConfiguration
 public class RepsyApiApplication {
 
