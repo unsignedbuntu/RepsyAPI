@@ -4,18 +4,20 @@ import com.repsy.repsy_api.storage.FileSystemStorageService;
 import com.repsy.repsy_api.storage.MinioStorageService;
 import com.repsy.repsy_api.storage.StorageProperties;
 import com.repsy.repsy_api.storage.StorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @EnableConfigurationProperties(StorageProperties.class)
-@ComponentScan(basePackages = "com.repsy.repsy_api")
 public class RepsyApiApplication {
+
+	private static final Logger logger = LoggerFactory.getLogger(RepsyApiApplication.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(RepsyApiApplication.class, args);
@@ -25,14 +27,14 @@ public class RepsyApiApplication {
 	@Bean
     @ConditionalOnProperty(name = "storage.strategy", havingValue = "filesystem", matchIfMissing = true)
     StorageService fileSystemStorageService(StorageProperties properties) {
-        // Need to inject properties here too
+        logger.info(">>> Creating FileSystemStorageService bean based on strategy: {}", properties.getStrategy());
         return new FileSystemStorageService(properties);
     }
 
     @Bean
     @ConditionalOnProperty(name = "storage.strategy", havingValue = "minio")
     StorageService minioStorageService(StorageProperties properties) {
-         // Need to inject properties here too
+         logger.info(">>> Creating MinioStorageService bean based on strategy: {}", properties.getStrategy());
         return new MinioStorageService(properties);
     }
 
