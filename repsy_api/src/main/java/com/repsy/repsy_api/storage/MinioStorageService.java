@@ -26,9 +26,9 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-@Service
-// Only activate this bean if storage.strategy is 'minio'
-@ConditionalOnProperty(name = "storage.strategy", havingValue = "minio")
+// @Service - REMOVED, managed by StorageConfiguration
+// Only activate this bean if storage.strategy is 'minio' - REMOVED, managed by StorageConfiguration
+// @ConditionalOnProperty(name = "storage.strategy", havingValue = "minio") // Managed in StorageConfiguration
 public class MinioStorageService implements StorageService {
 
     private static final Logger logger = LoggerFactory.getLogger(MinioStorageService.class);

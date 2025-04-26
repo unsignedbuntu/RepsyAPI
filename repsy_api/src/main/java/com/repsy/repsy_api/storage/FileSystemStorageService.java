@@ -6,7 +6,6 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,10 +16,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.stream.Stream;
 
-// Mark this class as a Spring Service
-// Add conditional logic later to only enable this if file-system strategy is chosen
-@Service
-@ConditionalOnProperty(name = "storage.strategy", havingValue = "filesystem", matchIfMissing = true)
+// Mark this class as a Spring Service - REMOVED, managed by StorageConfiguration
+// Add conditional logic later to only enable this if file-system strategy is chosen - REMOVED, managed by StorageConfiguration
+// @Service - REMOVED
+// @ConditionalOnProperty(name = "storage.strategy", havingValue = "filesystem", matchIfMissing = true) // Managed in StorageConfiguration
 public class FileSystemStorageService implements StorageService {
 
     private final Path rootLocation;
