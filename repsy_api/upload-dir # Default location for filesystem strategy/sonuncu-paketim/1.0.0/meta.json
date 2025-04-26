@@ -1,0 +1,12 @@
+{
+    "name": "sonuncu-paketim", 
+    "version": "1.0.0", 
+    "author": "John Repsy",
+     "dependencies": [
+       { "package": "evenfwa", "version": "3.4.7" },
+       { "package": "oddfwaf", "version": "4.2.8" },
+       { "package": "mathfwaf", "version": "1.2.0" }, 
+       { "package": "repsyfwaf", "version": "1.0.3" }, 
+       { "package": "clientfwaf", "version": "3.3.0" } 
+    ] 
+    }

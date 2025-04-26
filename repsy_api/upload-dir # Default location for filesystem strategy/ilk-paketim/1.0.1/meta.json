@@ -1,0 +1,10 @@
+{
+    "name": "ilk-paketim",
+    "version": "1.0.1",
+    "author": "Test2 Kullanici",
+    "dependencies": [
+      { "package": "ev", "version": "3.4.7" },
+      { "package": "odd", "version": "4.2.8" },
+      { "package": "mathhh", "version": "1.2.0" }
+    ]
+  }

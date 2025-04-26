@@ -1,0 +1,6 @@
+com\repsy\storage\api\StorageProperties.class
+com\repsy\storage\api\StorageFileNotFoundException.class
+com\repsy\storage\api\StorageException.class
+META-INF\spring-configuration-metadata.json
+com\repsy\storage\api\StorageProperties$MinioProperties.class
+com\repsy\storage\api\StorageService.class

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.repsy</groupId>
+        <artifactId>repsy-parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>storage-filesystem</artifactId>
+    <packaging>jar</packaging>
+    <name>storage-filesystem</name>
+    <description>Filesystem implementation for Repsy Storage Layer</description>
+
+    <dependencies>
+        <!-- Dependency on our own API module -->
+        <dependency>
+            <groupId>com.repsy</groupId>
+            <artifactId>storage-api</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Starter (includes core, context, logging, etc.) -->
+        <!-- We need context for @Service, @Autowired, maybe others -->
+        <!-- Let's use the starter but perhaps exclude web part if not needed -->
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <!-- Exclude web dependency if not strictly needed -->
+            <!-- <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                </exclusion>
+            </exclusions> -->
+        </dependency>
+
+        <!-- Explicitly need Spring Web for MultipartFile -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+
+        <!-- Jakarta annotations (for @PostConstruct) -->
+         <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+
+        <!-- SLF4J is brought in by spring-boot-starter -->
+
+    </dependencies>
+
+</project> 

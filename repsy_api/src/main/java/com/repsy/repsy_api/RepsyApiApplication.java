@@ -1,20 +1,18 @@
 package com.repsy.repsy_api;
 
-import com.repsy.repsy_api.storage.FileSystemStorageService;
-import com.repsy.repsy_api.storage.MinioStorageService;
-import com.repsy.repsy_api.storage.StorageProperties;
-import com.repsy.repsy_api.storage.StorageService;
+import com.repsy.repsy_api.config.StorageAutoConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 // import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; // Keep commented out for now
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
-@EnableConfigurationProperties(StorageProperties.class)
+@Import(StorageAutoConfiguration.class)
+// @EnableConfigurationProperties(StorageProperties.class) // This is now handled by StorageAutoConfiguration
 public class RepsyApiApplication {
 
 	private static final Logger logger = LoggerFactory.getLogger(RepsyApiApplication.class);
@@ -23,36 +21,27 @@ public class RepsyApiApplication {
 		SpringApplication.run(RepsyApiApplication.class, args);
 	}
 
-	// Moved StorageService Bean definitions here
+	// REMOVE the conflicting bean definitions from here
+	/*
 	@Bean
-    // @ConditionalOnProperty(name = "storage.strategy", havingValue = "filesystem", matchIfMissing = true) // Keep commented out
     StorageService fileSystemStorageService(StorageProperties properties) {
         logger.info(">>> Creating FileSystemStorageService bean unconditionally.");
         return new FileSystemStorageService(properties);
     }
 
-    /* // Minio bean remains commented out
     @Bean
     @ConditionalOnProperty(name = "storage.strategy", havingValue = "minio")
     StorageService minioStorageService(StorageProperties properties) {
          logger.info(">>> Creating MinioStorageService bean based on strategy: {}", properties.getStrategy());
         return new MinioStorageService(properties);
     }
-    */
+	*/
 
-	// We can add a CommandLineRunner bean later to initialize the storage on startup
+	// Keep CommandLineRunner commented out for now
 	/* @Bean
 	CommandLineRunner init(StorageService storageService) {
 		return (args) -> {
-			// Initialize storage on startup (create root directory/bucket)
-			try {
-                storageService.init();
-            } catch (Exception e) {
-                System.err.println("Failed to initialize storage: " + e.getMessage());
-                // Decide if the application should fail to start here
-            }
-			// Optional: Clear storage on startup - Use with caution!
-			// storageService.deleteAll();
+			storageService.init();
 		};
 	} */
 

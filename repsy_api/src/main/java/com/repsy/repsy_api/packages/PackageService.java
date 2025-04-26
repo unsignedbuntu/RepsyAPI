@@ -1,9 +1,9 @@
 package com.repsy.repsy_api.packages;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.repsy.repsy_api.storage.StorageException;
-import com.repsy.repsy_api.storage.StorageFileNotFoundException;
-import com.repsy.repsy_api.storage.StorageService;
+import com.repsy.storage.api.StorageException;
+import com.repsy.storage.api.StorageFileNotFoundException;
+import com.repsy.storage.api.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
