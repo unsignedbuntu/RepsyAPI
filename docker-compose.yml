@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine # Use a specific PostgreSQL version
+    container_name: repsy_postgres_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB} # Database name from .env file
+      POSTGRES_USER: ${POSTGRES_USER} # Database user from .env file
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # Database password from .env file
+    ports:
+      - "5432:5432" # Map container port 5432 to host port 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persist database data
+
+  minio:
+    image: minio/minio:latest
+    container_name: repsy_minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER} # Access key from .env file
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD} # Secret key from .env file
+    ports:
+      - "9000:9000" # API port
+      - "9001:9001" # Console port
+    volumes:
+      - minio_data:/data # Persist Minio data
+    command: server /data --console-address ":9001" # Start Minio server
+
+  repsy-api:
+    build:
+      context: ./repsy_api # Path to the directory containing the Dockerfile
+      dockerfile: Dockerfile
+    container_name: repsy_api_app
+    ports:
+      - "8080:8080" # Map container port 8080 to host port 8080
+    depends_on:
+      - db # Wait for db service to be ready (basic check)
+      - minio # Wait for minio service to be ready (basic check)
+    environment:
+      # --- Database Configuration ---
+      # Use service name 'db' as the hostname
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER} # From .env file
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD} # From .env file
+      # --- JPA / Hibernate Configuration ---
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update # Or validate/none
+      SPRING_JPA_SHOW_SQL: 'true'
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: 'true'
+      # --- Storage Configuration ---
+      # Default to filesystem, but can be overridden
+      STORAGE_STRATEGY: ${STORAGE_STRATEGY:-filesystem}
+      STORAGE_LOCATION: /app/upload-dir-in-container # Location inside the container if filesystem is used
+      # --- Minio Configuration (Override application.properties if strategy is minio) ---
+      # Use service name 'minio' as the hostname
+      STORAGE_MINIO_ENDPOINT: http://minio:9000
+      STORAGE_MINIO_ACCESS_KEY: ${MINIO_ROOT_USER} # From .env file
+      STORAGE_MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD} # From .env file
+      STORAGE_MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME} # From .env file
+    # Optional: Add a volume for filesystem storage if needed outside the container
+    # volumes:
+    #  - ./repsy_api/upload-dir:/app/upload-dir-in-container
+
+volumes:
+  postgres_data:
+  minio_data: 

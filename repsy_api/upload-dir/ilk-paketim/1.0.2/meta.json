@@ -1,0 +1,8 @@
+{
+    "name": "ilk-paketim",
+    "version": "1.0.2",
+    "author": "Test Kullanici",
+    "dependencies": [
+      "core-lib >= 1.2.0"
+    ]
+  }

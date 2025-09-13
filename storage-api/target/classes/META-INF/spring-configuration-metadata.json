@@ -1,0 +1,53 @@
+{
+  "groups": [
+    {
+      "name": "storage",
+      "type": "com.repsy.storage.api.StorageProperties",
+      "sourceType": "com.repsy.storage.api.StorageProperties"
+    },
+    {
+      "name": "storage.minio",
+      "type": "com.repsy.storage.api.StorageProperties$MinioProperties",
+      "sourceType": "com.repsy.storage.api.StorageProperties",
+      "sourceMethod": "getMinio()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "storage.location",
+      "type": "java.lang.String",
+      "description": "Base location for storing files when using the filesystem strategy. Relative paths are resolved against the application's working directory.",
+      "sourceType": "com.repsy.storage.api.StorageProperties",
+      "defaultValue": "upload-dir"
+    },
+    {
+      "name": "storage.minio.access-key",
+      "type": "java.lang.String",
+      "sourceType": "com.repsy.storage.api.StorageProperties$MinioProperties"
+    },
+    {
+      "name": "storage.minio.bucket-name",
+      "type": "java.lang.String",
+      "sourceType": "com.repsy.storage.api.StorageProperties$MinioProperties",
+      "defaultValue": "repsy-packages"
+    },
+    {
+      "name": "storage.minio.endpoint",
+      "type": "java.lang.String",
+      "sourceType": "com.repsy.storage.api.StorageProperties$MinioProperties"
+    },
+    {
+      "name": "storage.minio.secret-key",
+      "type": "java.lang.String",
+      "sourceType": "com.repsy.storage.api.StorageProperties$MinioProperties"
+    },
+    {
+      "name": "storage.strategy",
+      "type": "java.lang.String",
+      "description": "Strategy to use for storage. Can be 'filesystem' or 'minio'.",
+      "sourceType": "com.repsy.storage.api.StorageProperties",
+      "defaultValue": "filesystem"
+    }
+  ],
+  "hints": []
+}

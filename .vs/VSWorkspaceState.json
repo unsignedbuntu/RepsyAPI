@@ -1,0 +1,9 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\storage-filesystem",
+    "\\storage-minio"
+  ],
+  "SelectedNode": "\\docker-compose.yml",
+  "PreviewInSolutionExplorer": false
+}

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.5-SNAPSHOT</version> <!-- Check for the latest stable version -->
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.repsy</groupId>
+	<artifactId>repsy-parent</artifactId> <!-- Changed artifactId to represent the parent -->
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging> <!-- Changed packaging to pom -->
+	<name>repsy-parent</name>
+	<description>Parent project for Repsy API and Storage Libraries</description>
+
+	<!-- Define modules -->
+	<modules>
+		<module>repsy_api</module> <!-- The main application module -->
+		<!-- storage-* modules removed as they will be deployed and used as external dependencies -->
+	</modules>
+
+	<properties>
+		<java.version>17</java.version>
+		<minio.version>8.5.10</minio.version> <!-- Example: Define Minio version here -->
+		<!-- GitHub Packages specific properties -->
+		<github.owner>unsignedbuntu</github.owner> <!-- Replace with your GitHub username or organization name -->
+		<github.repository>RepsyAPI</github.repository> <!-- Replace with your GitHub repository name -->
+		<github.packages.url>https://maven.pkg.github.com/${github.owner}/${github.repository}</github.packages.url>
+	</properties>
+
+	<!-- Dependency Management: Define dependency versions for all modules -->
+	<dependencyManagement>
+		<dependencies>
+			<!-- Define versions for our own modules -->
+			<!-- Keep these definitions for consistent versioning, even though modules are external now -->
+			<dependency>
+				<groupId>com.repsy</groupId>
+				<artifactId>storage-api</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.repsy</groupId>
+				<artifactId>storage-filesystem</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.repsy</groupId>
+				<artifactId>storage-minio</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.repsy</groupId>
+				<artifactId>repsy_api</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<!-- Minio Client Dependency -->
+			<dependency>
+				<groupId>io.minio</groupId>
+				<artifactId>minio</artifactId>
+				<version>${minio.version}</version>
+			</dependency>
+
+			<!-- Add other common dependencies if needed -->
+
+		</dependencies>
+	</dependencyManagement>
+
+	<!-- Common build configuration for all modules -->
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<!-- Configuration might be needed specifically in repsy_api module -->
+				</plugin>
+				<!-- Adding maven-deploy-plugin for deployment -->
+				<plugin>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>3.1.1</version> <!-- Use a recent version -->
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<!-- Define where to deploy the artifacts -->
+	<distributionManagement>
+		<repository>
+			<id>github</id> <!-- This ID must match the server ID in your settings.xml -->
+			<name>GitHub Packages for ${github.owner}/${github.repository}</name>
+			<url>${github.packages.url}</url>
+		</repository>
+		<snapshotRepository>
+			<id>github</id> <!-- Use the same ID for snapshots -->
+			<name>GitHub Packages Snapshots for ${github.owner}/${github.repository}</name>
+			<url>${github.packages.url}</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<!-- Add repositories for downloading dependencies -->
+	<repositories>
+		<!-- Repository for downloading our own deployed artifacts -->
+		<repository>
+			<id>github</id> <!-- This ID should match the one in distributionManagement and settings.xml -->
+			<name>GitHub Packages for ${github.owner}/${github.repository}</name>
+			<url>${github.packages.url}</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+		</repository>
+		<!-- Existing repository for Spring snapshots -->
+		<repository>
+			<id>spring-snapshots</id>
+			<name>Spring Snapshots</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>spring-snapshots</id>
+			<name>Spring Snapshots</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+</project> 
