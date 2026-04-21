@@ -23,7 +23,7 @@
 
 	<properties>
 		<java.version>17</java.version>
-		<minio.version>8.5.10</minio.version> <!-- Example: Define Minio version here -->
+		<minio.version>8.6.0</minio.version> <!-- Example: Define Minio version here -->
 		<!-- GitHub Packages specific properties -->
 		<github.owner>unsignedbuntu</github.owner> <!-- Replace with your GitHub username or organization name -->
 		<github.repository>RepsyAPI</github.repository> <!-- Replace with your GitHub repository name -->
